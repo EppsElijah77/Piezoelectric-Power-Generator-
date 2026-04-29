@@ -7,7 +7,7 @@ A energy harvesting system that converts the mechanical pressure of footsteps in
 
 ## Overview
 
-This project explores harvesting kinetic energy from everyday walking. Piezoelectric materials generate a small electric charge when mechanically stressed — by embedding them in a floor tile, each footstep becomes a tiny power source. The generated energy can be stored in a capacitor or small battery and used to power low-energy electronics like sensors, LEDs, or Bluetooth beacons.
+This project explores harvesting kinetic energy from everyday walking. Piezoelectric materials generate a small electric charge when mechanically stressed — by embedding them in a floor tile, each footstep becomes a tiny power source. The generated energy can be stored in a capacitor.
 
 ---
 
@@ -16,8 +16,8 @@ This project explores harvesting kinetic energy from everyday walking. Piezoelec
 1. **Pressure Applied** — User steps on the piezoelectric element (insole, tile, or pad)
 2. **Charge Generated** — The piezo material deforms and produces an AC voltage spike
 3. **Rectification** — A bridge rectifier converts AC to DC
-4. **Storage** — A capacitor or supercapacitor smooths and stores the charge
-5. **Output** — Regulated DC power is delivered to the load (sensor, LED, microcontroller, etc.)
+4. **Storage** — A capacitor 
+5. **Output** — Regulated DC power is delivered to the load
 
 ---
 
@@ -30,7 +30,7 @@ This project explores harvesting kinetic energy from everyday walking. Piezoelec
 | Capacitor / Supercapacitor | Energy storage buffer |
 | Voltage Regulator | Stabilizes output voltage (e.g., LDO or boost converter) |
 | Load | Target device (LED, sensor, microcontroller) |
-| Enclosure / Insole | Physical housing for the piezo stack |
+| Enclosure | Physical housing for the piezo stack |
 
 ---
 
@@ -48,11 +48,11 @@ A more detailed schematic can be found in `/schematics/`.
 
 | Scenario | Estimated Output |
 |---|---|
-| Single disc, one step | ~1–5 mW (brief pulse) |
-| Stack of 10 discs, walking | ~10–50 mW average |
-| Optimized multi-layer insole | ~100–200 mW under continuous walking |
+| Single disc, one step | Unknown |
+| Stack of 10 discs, walking | Unknown |
+| Optimized multi-layer, Walking |Unknown |
 
-> ⚠️ Piezoelectric generators produce low-average power. They are best suited for ultra-low-power applications or as supplemental charging sources.
+> Piezoelectric generators produce low-average power. They are best suited for ultra-low-power applications or as supplemental charging sources.
 
 ---
 
@@ -67,7 +67,7 @@ A more detailed schematic can be found in `/schematics/`.
 - Connect AC input from piezo, DC output to capacitor
 
 ### 3. Add Storage and Regulation
-- Connect a supercapacitor across the DC output for energy buffering
+- Connect a capacitor across the DC output for energy buffering
 - Add a boost converter or LDO regulator to provide stable output voltage
 
 ### 4. Integrate into Insole or Enclosure
@@ -84,11 +84,11 @@ A more detailed schematic can be found in `/schematics/`.
 
 ```
 /
-├── schematics/          # Circuit diagrams and KiCad files
-├── hardware/            # Insole design, 3D print files (.stl)
-├── firmware/            # Code for any connected microcontroller
-├── data/                # Measurement logs and test results
-├── docs/                # Additional documentation and references
+├── Schematics/          # Circuit diagrams and KiCad files
+├── Hardware/            # Insole design, 3D print files (.stl)
+├── Firmware/            # Code for any connected microcontroller
+├── Data/                # Measurement logs and test results
+├── Docs/                # Additional documentation and references
 └── README.md
 ```
 
@@ -115,7 +115,7 @@ A more detailed schematic can be found in `/schematics/`.
 
 ## License
 
-MIT License — feel free to use, modify, and share. See `LICENSE` for details.
+GPL 2.0 License — feel free to use, modify, and share. See `LICENSE` for details.
 
 ---
 
