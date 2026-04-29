@@ -6,15 +6,15 @@ from bleak import BleakClient, BleakScanner
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 # ─────────────────────────────────────────────
-# BLE CONFIG  (must match your ESP32-C6 code)
+# BLE CONFIG
 # ─────────────────────────────────────────────
 DEVICE_NAME = "ESP32-C6 FootStep"
 TX_UUID     = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  # ESP32 notifies on this
 
 # ─────────────────────────────────────────────
-# AWS IoT CONFIG  (reusing SenseHat certs)
+# AWS IoT CONFIG  
 # ─────────────────────────────────────────────
-HOST      = "a3lz5fjtuoifub-ats.iot.us-east-2.amazonaws.com"
+HOST      = ""          #change to your cloud 
 CERT_PATH = "cert/"
 CLIENT_ID = "Pi_400_BLE_Bridge"
 TOPIC     = "ESP32/FootStep"          # change to any topic you like
@@ -59,9 +59,6 @@ def handle_data(sender, data: bytearray):
     print(f"\r📡 BLE raw: {raw}", end="", flush=True)
 
     # ── Parse the ESP32 message ──────────────────────────────────────────
-    # Handles two common formats:
-    #   1.  "key:value,key:value"  →  parsed into a dict
-    #   2.  plain number string    →  stored as {"value": <number>}
     parsed = {}
     if ":" in raw:
         for pair in raw.split(","):
@@ -103,22 +100,22 @@ async def main():
     # 1. Connect to AWS IoT first
     log.info("Connecting to AWS IoT Core...")
     mqtt_client.connect()
-    log.info("✅ AWS IoT connected.")
+    log.info("AWS IoT connected.")
 
     # 2. Scan for the ESP32
     log.info(f"🔍 Scanning for '{DEVICE_NAME}'...")
     device = await BleakScanner.find_device_by_name(DEVICE_NAME, timeout=15)
 
     if device is None:
-        log.error(f"❌ Could not find '{DEVICE_NAME}'. Is the ESP32 powered on?")
+        log.error(f"Could not find '{DEVICE_NAME}'. Is the ESP32 powered on?")
         mqtt_client.disconnect()
         return
 
-    log.info(f"✅ Found device: {device.address}")
-    log.info("📶 Connecting over BLE...")
+    log.info(f"Found device: {device.address}")
+    log.info("Connecting over BLE...")
 
     async with BleakClient(device) as ble_client:
-        log.info("🟢 BLE connected! Streaming data to AWS IoT...\n" + "-" * 40)
+        log.info("BLE connected! Streaming data to AWS IoT...\n" + "-" * 40)
 
         await ble_client.start_notify(TX_UUID, handle_data)
 
@@ -127,7 +124,7 @@ async def main():
                 await asyncio.sleep(1)
         except KeyboardInterrupt:
             print("\n")
-            log.info("🔴 Stopped by user.")
+            log.info("Stopped by user.")
             await ble_client.stop_notify(TX_UUID)
 
     mqtt_client.disconnect()
