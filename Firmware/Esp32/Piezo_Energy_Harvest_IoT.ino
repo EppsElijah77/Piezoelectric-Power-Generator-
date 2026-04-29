@@ -7,9 +7,9 @@
 #include <Adafruit_NeoPixel.h>
 
 // --- BLE UUIDs (standard BLE UART profile) ---
-#define SERVICE_UUID           "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+#define SERVICE_UUID           ""  //Switch to your unique profile 
+#define CHARACTERISTIC_UUID_RX ""
+#define CHARACTERISTIC_UUID_TX ""
 
 // --- Onboard RGB LED ---
 #define RGB_PIN   8
