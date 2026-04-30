@@ -6,15 +6,15 @@ from bleak import BleakClient, BleakScanner
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 # ─────────────────────────────────────────────
-# BLE CONFIG
+# BLE CONFIG  (must match your ESP32-C6 code)
 # ─────────────────────────────────────────────
 DEVICE_NAME = "ESP32-C6 FootStep"
-TX_UUID     = ""  # ESP32 notifies on this
+TX_UUID     = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  # ESP32 notifies on this
 
 # ─────────────────────────────────────────────
-# AWS IoT CONFIG  
+# AWS IoT CONFIG  (reusing SenseHat certs)
 # ─────────────────────────────────────────────
-HOST      = ""          #change to your cloud 
+HOST      = "AWS.Placeholder"
 CERT_PATH = "cert/"
 CLIENT_ID = "Pi_400_BLE_Bridge"
 TOPIC     = "ESP32/FootStep"          # change to any topic you like
@@ -59,6 +59,9 @@ def handle_data(sender, data: bytearray):
     print(f"\r📡 BLE raw: {raw}", end="", flush=True)
 
     # ── Parse the ESP32 message ──────────────────────────────────────────
+    # Handles two common formats:
+    #   1.  "key:value,key:value"  →  parsed into a dict
+    #   2.  plain number string    →  stored as {"value": <number>}
     parsed = {}
     if ":" in raw:
         for pair in raw.split(","):
@@ -103,7 +106,7 @@ async def main():
     log.info("AWS IoT connected.")
 
     # 2. Scan for the ESP32
-    log.info(f"🔍 Scanning for '{DEVICE_NAME}'...")
+    log.info(f"Scanning for '{DEVICE_NAME}'...")
     device = await BleakScanner.find_device_by_name(DEVICE_NAME, timeout=15)
 
     if device is None:
