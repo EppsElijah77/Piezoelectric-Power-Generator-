@@ -6,18 +6,18 @@ from bleak import BleakClient, BleakScanner
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 
 # ─────────────────────────────────────────────
-# BLE CONFIG  (must match your ESP32-C6 code)
+# BLE CONFIG
 # ─────────────────────────────────────────────
 DEVICE_NAME = "ESP32-C6 FootStep"
 TX_UUID     = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  # ESP32 notifies on this
 
 # ─────────────────────────────────────────────
-# AWS IoT CONFIG  (reusing SenseHat certs)
+# AWS IoT CONFIG
 # ─────────────────────────────────────────────
-HOST      = "AWS.Placeholder"
+HOST      = "a3lz5fjtuoifub-ats.iot.us-east-2.amazonaws.com"
 CERT_PATH = "cert/"
 CLIENT_ID = "Pi_400_BLE_Bridge"
-TOPIC     = "ESP32/FootStep"          # change to any topic you like
+TOPIC     = "ESP32/FootStep"          
 
 # ─────────────────────────────────────────────
 # LOGGING
@@ -36,7 +36,7 @@ mqtt_client.configureCredentials(
     f"{CERT_PATH}SenseHat_S25-cert.pem.crt",
 )
 mqtt_client.configureAutoReconnectBackoffTime(1, 32, 20)
-mqtt_client.configureOfflinePublishQueueing(-1)   # queue messages while offline
+mqtt_client.configureOfflinePublishQueueing(-1)  
 mqtt_client.configureDrainingFrequency(2)
 mqtt_client.configureConnectDisconnectTimeout(10)
 mqtt_client.configureMQTTOperationTimeout(5)
@@ -47,37 +47,28 @@ sequence = 0  # message counter
 # BLE NOTIFICATION HANDLER
 # ─────────────────────────────────────────────
 def handle_data(sender, data: bytearray):
-    """
-    Called every time the ESP32 sends a BLE notification.
-    Parses the raw UTF-8 message and publishes it to AWS IoT.
-    
-    Expected ESP32 message format (adjust parsing below if yours differs):
-        e.g.  "steps:42"  or  "42"  or  "steps:42,cadence:1.2"
-    """
+
     global sequence
     raw = data.decode("utf-8").strip()
     print(f"\r📡 BLE raw: {raw}", end="", flush=True)
 
     # ── Parse the ESP32 message ──────────────────────────────────────────
-    # Handles two common formats:
-    #   1.  "key:value,key:value"  →  parsed into a dict
-    #   2.  plain number string    →  stored as {"value": <number>}
     parsed = {}
-    if ":" in raw:
-        for pair in raw.split(","):
-            if ":" in pair:
-                k, v = pair.split(":", 1)
-                k = k.strip()
-                v = v.strip()
+    try:
+        parts = raw.split("|")
+        for part in parts:
+            part = part.strip()
+            if ":" in part:
+                k, v = part.split(":", 1)
+                k = k.strip().lower()
+                v = v.strip().replace("V", "").replace("v", "").strip()  
                 try:
                     parsed[k] = float(v) if "." in v else int(v)
                 except ValueError:
                     parsed[k] = v
-    else:
-        try:
-            parsed["value"] = float(raw) if "." in raw else int(raw)
-        except ValueError:
-            parsed["raw"] = raw          # fallback: keep as plain string
+    except Exception as e:
+        log.warning(f"Could not parse BLE message '{raw}': {e}")
+        parsed["raw"] = raw
 
     # ── Build MQTT payload ───────────────────────────────────────────────
     payload = {
@@ -100,12 +91,10 @@ def handle_data(sender, data: bytearray):
 # MAIN ASYNC LOOP
 # ─────────────────────────────────────────────
 async def main():
-    # 1. Connect to AWS IoT first
     log.info("Connecting to AWS IoT Core...")
     mqtt_client.connect()
     log.info("AWS IoT connected.")
 
-    # 2. Scan for the ESP32
     log.info(f"Scanning for '{DEVICE_NAME}'...")
     device = await BleakScanner.find_device_by_name(DEVICE_NAME, timeout=15)
 
@@ -133,8 +122,5 @@ async def main():
     mqtt_client.disconnect()
     log.info("AWS IoT disconnected.")
 
-# ─────────────────────────────────────────────
-# ENTRY POINT
-# ─────────────────────────────────────────────
 if __name__ == "__main__":
     asyncio.run(main())
