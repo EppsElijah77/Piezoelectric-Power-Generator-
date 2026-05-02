@@ -1,7 +1,7 @@
 
 # Piezoelectric Power Generator — Foot Power 
 
-A energy harvesting system that converts the mechanical pressure of footsteps into usable electrical energy using piezoelectric transducers.
+An energy harvesting system that converts the mechanical pressure of footsteps into usable electrical energy using piezoelectric transducers.
 
 ---
 
