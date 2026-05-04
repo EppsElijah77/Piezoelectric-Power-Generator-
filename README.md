@@ -84,6 +84,7 @@ A more detailed schematic can be found in `/schematics/`.
 
 ```
 /
+├── AWS/                 # AWS policies and Lambda function
 ├── Schematics/          # Circuit diagrams and KiCad files
 ├── Hardware/            # Insole design, 3D print files (.stl)
 ├── Firmware/            # Code for any connected microcontroller
