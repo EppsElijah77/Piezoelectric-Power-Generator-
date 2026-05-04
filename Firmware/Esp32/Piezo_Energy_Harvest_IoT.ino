@@ -236,14 +236,15 @@ void loop() {
       Serial.print(peakVoltage_mV, 1);
       Serial.println(" mV");
 
-      char bleBuf[80];
-      snprintf(
-        bleBuf,
-        sizeof(bleBuf),
-        "Footstep: %d | Peak: %.1f mV\n",
-        footstepCount,
-        peakVoltage_mV
-      );
+    // BLE Message
+    char bleBuf[80];
+    snprintf(
+      bleBuf,
+      sizeof(bleBuf),
+      "steps: %d | voltage: %.4f\n",
+      footstepCount,
+      adcVoltage_mV / 1000.0
+    );
 
       blePrint(bleBuf);
 
