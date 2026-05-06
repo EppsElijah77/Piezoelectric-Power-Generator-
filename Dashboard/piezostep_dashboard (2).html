@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PiezoStep Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080c10;
+      --bg2: #0d1117;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.07);
+      --border-bright: rgba(56,255,180,0.25);
+      --text-primary: #eef2f7;
+      --text-muted: #6e7f96;
+      --text-dim: #3d4f64;
+      --green: #38ffb4;
+      --green-dim: rgba(56,255,180,0.08);
+      --green-mid: rgba(56,255,180,0.15);
+      --blue: #4f9eff;
+      --blue-dim: rgba(79,158,255,0.08);
+      --amber: #ffb347;
+      --amber-dim: rgba(255,179,71,0.08);
+      --danger: #ff5757;
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Outfit', sans-serif;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--display);
+      padding: 28px 20px 40px;
+      overflow-x: hidden;
+    }
+
+    /* Atmospheric background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 55% 35% at 85% 5%, rgba(56,255,180,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 5% 90%, rgba(79,158,255,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 30% 50% at 50% 50%, rgba(56,255,180,0.02) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Noise texture overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .dashboard {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: var(--green-mid);
+      border: 1px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .brand-icon::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(56,255,180,0.3), transparent 60%);
+      pointer-events: none;
+    }
+
+    .brand-icon svg { width: 20px; height: 20px; color: var(--green); }
+
+    .brand-text h1 {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--text-primary) 40%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-text p {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--surface);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    #connectionStatus {
+      background: var(--green-dim);
+      border-color: var(--border-bright);
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #connectionStatus::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.8s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    #connectionStatus.disconnected {
+      background: rgba(255,87,87,0.08);
+      border-color: rgba(255,87,87,0.3);
+      color: var(--danger);
+    }
+
+    #connectionStatus.disconnected::before { background: var(--danger); animation: none; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 1; }
+    }
+
+    /* ── METRIC CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s;
+      cursor: default;
+    }
+
+    .card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(255,255,255,0.11);
+      transform: translateY(-1px);
+    }
+
+    /* Top glow line per card */
+    .card[data-color="green"]::before { background: linear-gradient(90deg, transparent 5%, var(--green) 50%, transparent 95%); opacity: 0.35; }
+    .card[data-color="blue"]::before  { background: linear-gradient(90deg, transparent 5%, var(--blue) 50%, transparent 95%); opacity: 0.25; }
+    .card[data-color="amber"]::before { background: linear-gradient(90deg, transparent 5%, var(--amber) 50%, transparent 95%); opacity: 0.3; }
+    .card[data-color="session"]::before { background: linear-gradient(90deg, transparent 5%, #a78bfa 50%, transparent 95%); opacity: 0.3; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+    }
+
+    /* Corner accent */
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 60px; height: 60px;
+      background: radial-gradient(ellipse at top right, rgba(56,255,180,0.04), transparent 70%);
+      border-radius: 0 var(--radius) 0 0;
+    }
+
+    .card[data-color="blue"]::after  { background: radial-gradient(ellipse at top right, rgba(79,158,255,0.05), transparent 70%); }
+    .card[data-color="amber"]::after { background: radial-gradient(ellipse at top right, rgba(255,179,71,0.05), transparent 70%); }
+    .card[data-color="session"]::after { background: radial-gradient(ellipse at top right, rgba(167,139,250,0.05), transparent 70%); }
+
+    .card-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-label-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .card[data-color="blue"]  .card-label-dot { background: var(--blue); }
+    .card[data-color="amber"] .card-label-dot { background: var(--amber); }
+    .card[data-color="session"] .card-label-dot { background: #a78bfa; }
+
+    .card-value {
+      font-family: var(--mono);
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+    }
+
+    .card-value .unit {
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 5px;
+      letter-spacing: 0;
+    }
+
+    .card-sub {
+      margin-top: 12px;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    /* Live voltage card special state */
+    .card.active-pulse {
+      border-color: rgba(56,255,180,0.2);
+    }
+
+    .card.active-pulse .card-value {
+      color: var(--green);
+    }
+
+    /* ── SESSION TOTAL CARD ── */
+    .card[data-color="session"] .card-value { color: #c4b5fd; }
+
+    /* ── PANELS ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 22px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title-icon {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      background: var(--green-dim);
+      border: 1px solid rgba(56,255,180,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-title-icon svg { width: 11px; height: 11px; color: var(--green); }
+
+    .panel-meta {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+
+    /* ── VOLT BAR ── */
+    .volt-bar-wrap {
+      position: relative;
+      height: 10px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .volt-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .volt-bar-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent 60%, rgba(255,255,255,0.18));
+      border-radius: 999px;
+    }
+
+    /* Glow on bar */
+    .volt-bar-glow {
+      position: absolute;
+      right: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--green);
+      filter: blur(5px);
+      opacity: 0;
+      transition: opacity 0.5s;
+      pointer-events: none;
+    }
+
+    .volt-bar-fill.active .volt-bar-glow { opacity: 0.5; }
+
+    .volt-ticks {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0 0;
+    }
+
+    .volt-ticks span {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--text-dim);
+    }
+
+    /* ── SPARKLINE ── */
+    .sparkline-container {
+      margin-top: 22px;
+      height: 90px;
+      position: relative;
+    }
+
+    .sparkline-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 100% 30px, 80px 100%;
+      opacity: 0.5;
+    }
+
+    .sparkline-svg {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* ── LIVE VOLT DISPLAY ── */
+    .live-volt-display {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    .live-volt-number {
+      font-family: var(--mono);
+      font-size: 3.2rem;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      color: var(--text-primary);
+      transition: color 0.4s;
+      line-height: 1;
+    }
+
+    .live-volt-number.lit { color: var(--green); }
+
+    .live-volt-unit {
+      font-family: var(--mono);
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .live-volt-label {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      align-self: center;
+    }
+
+    /* ── LOG TABLE ── */
+    .log-table-wrap {
+      overflow-y: auto;
+      max-height: 260px;
+      margin: 0 -2px;
+    }
+
+    .log-table-wrap::-webkit-scrollbar { width: 3px; }
+    .log-table-wrap::-webkit-scrollbar-track { background: transparent; }
+    .log-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .log-table thead th {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0 10px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg2);
+    }
+
+    .log-table tbody td {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-primary);
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.035);
+    }
+
+    .log-table tbody td:first-child { color: var(--text-dim); }
+    .log-table tbody tr:last-child td { border-bottom: none; }
+
+    .log-table tbody tr {
+      transition: background 0.15s;
+    }
+
+    .log-table tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+    .log-table tbody tr.new-row td { animation: rowIn 0.35s ease; }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+    }
+
+    .badge-green {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(56,255,180,0.15);
+    }
+
+    .badge-blue {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid rgba(79,158,255,0.15);
+    }
+
+    .badge-zero {
+      background: rgba(255,255,255,0.03);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 2px;
+    }
+
+    .footer-left {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50%       { opacity: 1; transform: scale(1.4); }
+    }
+
+    .footer-right {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      body { padding: 16px 14px 30px; }
+      .brand-text h1 { font-size: 1.15rem; }
+      .card-value { font-size: 1.9rem; }
+      .live-volt-number { font-size: 2.4rem; }
+      .stats-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main class="dashboard">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>PiezoStep</h1>
+        <p>ESP32 → Raspberry Pi → Flask &nbsp;·&nbsp; Energy Harvesting IoT</p>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span class="chip">1s polling</span>
+      <span id="connectionStatus" class="chip">Waiting…</span>
+    </div>
+  </header>
+
+  <!-- METRIC CARDS ROW -->
+  <section class="cards">
+
+    <!-- Live Voltage -->
+    <div class="card" id="liveVoltCard" data-color="green">
+      <div class="card-label"><span class="card-label-dot"></span>Live Voltage</div>
+      <div class="card-value"><span id="voltageValue">0</span><span class="unit">mV</span></div>
+      <div class="card-sub" id="liveVoltSub">Waiting for footstep…</div>
+    </div>
+
+    <!-- Session Total Voltage -->
+    <div class="card" data-color="session">
+      <div class="card-label"><span class="card-label-dot"></span>Session Total</div>
+      <div class="card-value"><span id="sessionTotalValue">0</span><span class="unit">mV</span></div>
+      <div class="card-sub">Cumulative voltage this session</div>
+    </div>
+
+    <!-- Total Steps -->
+    <div class="card" data-color="blue">
+      <div class="card-label"><span class="card-label-dot"></span>Total Steps</div>
+      <div class="card-value"><span id="stepsValue">0</span><span class="unit">steps</span></div>
+      <div class="card-sub">Running count from ESP32</div>
+    </div>
+
+    <!-- Last Update -->
+    <div class="card" data-color="amber">
+      <div class="card-label"><span class="card-label-dot"></span>Last Update</div>
+      <div class="card-value" id="lastUpdate" style="font-size:1.75rem">--:--</div>
+      <div class="card-sub">Synced from Flask endpoint</div>
+    </div>
+
+  </section>
+
+  <!-- VOLTAGE LEVEL PANEL -->
+  <section class="panel">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-title-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </span>
+        Voltage Monitor
+      </span>
+      <span class="panel-meta" id="voltPct">0% of 3300 mV</span>
+    </div>
+
+    <!-- Large live readout -->
+    <div class="live-volt-display">
+      <span class="live-volt-number" id="liveVoltLarge">0</span>
+      <span class="live-volt-unit">mV</span>
+      <span class="live-volt-label" id="peakLabel">PEAK THIS SESSION: <span id="peakValue">0</span> mV</span>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="volt-bar-wrap">
+      <div id="voltageBar" class="volt-bar-fill">
+        <div class="volt-bar-glow" id="barGlow"></div>
+      </div>
+    </div>
+    <div class="volt-ticks">
+      <span>0</span><span>825</span><span>1650</span><span>2475</span><span>3300 mV</span>
+    </div>
+
+    <!-- Sparkline -->
+    <div class="sparkline-container">
+      <div class="sparkline-grid"></div>
+      <svg id="sparkline" class="sparkline-svg" preserveAspectRatio="none"></svg>
+    </div>
+  </section>
+
+  <!-- RECENT READINGS -->
+  <section class="panel">
+    <div class="panel-header">
+      <span class="panel-title">
+        <span class="panel-title-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+        </span>
+        Recent Readings
+      </span>
+      <span class="panel-meta">last 10 entries</span>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Live Voltage</th>
+            <th>Steps</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <span class="footer-dot"></span>
+      AWS-Based Smart Energy-Harvesting IoT System
+    </div>
+    <div class="footer-right">max ADC: 3300 mV &nbsp;·&nbsp; ESP32</div>
+  </footer>
+
+</main>
+
+<script>
+  const apiUrl        = "https://jkow9qhu2d.execute-api.us-east-2.amazonaws.com/api/data";
+  const maxVoltageMv  = 3300;
+  const historyMax    = 60;
+  const voltHistory   = [];
+
+  // ── State ──────────────────────────────────────
+  let sessionTotal    = 0;      // cumulative voltage only on new steps
+  let peakVoltage     = 0;      // session peak voltage
+  let lastSteps       = -1;     // previous step count — detect new steps
+  let decayTimer      = null;   // zero-out timer after step activity stops
+  const DECAY_MS      = 2000;   // ms of silence before showing 0
+
+  // ── DOM refs ───────────────────────────────────
+  const voltageValue      = document.getElementById("voltageValue");
+  const sessionTotalValue = document.getElementById("sessionTotalValue");
+  const stepsValue        = document.getElementById("stepsValue");
+  const lastUpdate        = document.getElementById("lastUpdate");
+  const voltageBar        = document.getElementById("voltageBar");
+  const barGlow           = document.getElementById("barGlow");
+  const connectionStatus  = document.getElementById("connectionStatus");
+  const logBody           = document.getElementById("logBody");
+  const voltPct           = document.getElementById("voltPct");
+  const sparklineSvg      = document.getElementById("sparkline");
+  const liveVoltLarge     = document.getElementById("liveVoltLarge");
+  const peakValue         = document.getElementById("peakValue");
+  const liveVoltCard      = document.getElementById("liveVoltCard");
+  const liveVoltSub       = document.getElementById("liveVoltSub");
+
+  // ── Sparkline ──────────────────────────────────
+  function drawSparkline(data) {
+    if (data.length < 2) return;
+    const W = sparklineSvg.clientWidth  || 700;
+    const H = sparklineSvg.clientHeight || 90;
+    const pad = 6;
+    const max = Math.max(...data, 1);
+    const range = max || 1;
+
+    const pts = data.map((v, i) => {
+      const x = pad + (i / (data.length - 1)) * (W - pad * 2);
+      const y = H - pad - (v / range) * (H - pad * 2);
+      return [x, y];
+    });
+
+    // Smooth bezier path
+    function bezierPath(points) {
+      if (points.length < 2) return '';
+      let d = `M${points[0][0]},${points[0][1]}`;
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const cx = (prev[0] + curr[0]) / 2;
+        d += ` C${cx},${prev[1]} ${cx},${curr[1]} ${curr[0]},${curr[1]}`;
+      }
+      return d;
+    }
+
+    const pathD = bezierPath(pts);
+    const areaD = `${pathD} L${pts[pts.length-1][0]},${H} L${pts[0][0]},${H} Z`;
+
+    sparklineSvg.innerHTML = `
+      <defs>
+        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#38ffb4" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="#38ffb4" stop-opacity="0"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path d="${areaD}" fill="url(#sg)"/>
+      <path d="${pathD}" fill="none" stroke="#38ffb4" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" opacity="0.9"/>
+      <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="3.5"
+              fill="#38ffb4" filter="url(#glow)"/>
+    `;
+  }
+
+  // ── Connection status ───────────────────────────
+  function setStatus(connected) {
+    if (connected) {
+      connectionStatus.textContent = "Connected";
+      connectionStatus.classList.remove("disconnected");
+    } else {
+      connectionStatus.textContent = "Disconnected";
+      connectionStatus.classList.add("disconnected");
+    }
+  }
+
+  // ── Zero everything out (called when steps stop) ──
+  function setAllZero() {
+    voltageValue.textContent     = "0";
+    liveVoltLarge.textContent    = "0";
+    liveVoltLarge.classList.remove("lit");
+    liveVoltCard.classList.remove("active-pulse");
+    liveVoltSub.textContent      = "No footstep detected";
+    voltageBar.style.width       = "0%";
+    voltPct.textContent          = "0% of 3300 mV";
+    stepsValue.textContent       = "0";
+    voltHistory.push(0);
+    if (voltHistory.length > historyMax) voltHistory.shift();
+    drawSparkline(voltHistory);
+  }
+
+  // ── Main update ─────────────────────────────────
+  function updateDashboard(data) {
+    const voltageMv  = Number(data.voltage_mv || 0);
+    const steps      = Number(data.steps || 0);
+    const now        = new Date();
+    const timeStr    = now.toLocaleTimeString();
+    const stepsChanged = steps > 0 && steps !== lastSteps;
+
+    lastUpdate.textContent = timeStr;
+    setStatus(true);
+
+    if (stepsChanged) {
+      // ── New footstep detected ──────────────────────
+      lastSteps = steps;
+
+      // Accumulate session total voltage only on new steps
+      if (voltageMv > 0) {
+        sessionTotal += voltageMv;
+        sessionTotalValue.textContent = sessionTotal.toFixed(0);
+      }
+
+      // Peak tracking
+      if (voltageMv > peakVoltage) {
+        peakVoltage = voltageMv;
+        peakValue.textContent = peakVoltage.toFixed(1);
+      }
+
+      // Update steps display
+      stepsValue.textContent = steps;
+
+      // Update voltage display
+      const displayVolt = voltageMv > 0 ? voltageMv : 0;
+      voltageValue.textContent  = displayVolt.toFixed(1);
+      liveVoltLarge.textContent = displayVolt.toFixed(1);
+      liveVoltLarge.classList.toggle("lit", displayVolt > 0);
+      liveVoltCard.classList.toggle("active-pulse", displayVolt > 0);
+      liveVoltSub.textContent = displayVolt > 0 ? "Footstep detected!" : "Step — no voltage";
+
+      const pct = Math.min((displayVolt / maxVoltageMv) * 100, 100);
+      voltageBar.style.width = pct.toFixed(1) + "%";
+      voltPct.textContent    = pct.toFixed(1) + "% of " + maxVoltageMv + " mV";
+
+      voltHistory.push(displayVolt);
+      if (voltHistory.length > historyMax) voltHistory.shift();
+      drawSparkline(voltHistory);
+
+      // Reset decay — zero out if no new step arrives within DECAY_MS
+      clearTimeout(decayTimer);
+      decayTimer = setTimeout(setAllZero, DECAY_MS);
+
+      // Log only on new steps
+      addLogRow(timeStr, voltageMv, steps);
+
+    } else {
+      // Steps unchanged — show nothing (already decaying or zeroed)
+      // Do not add a log row, do not update voltage display
+    }
+  }
+
+  // ── Log rows (only added on new steps) ───────────
+  function addLogRow(time, voltageMv, steps) {
+    const voltBadge = voltageMv > 0
+      ? `<span class="badge badge-blue">${voltageMv.toFixed(1)} mV</span>`
+      : `<span class="badge badge-zero">0 mV</span>`;
+    const stepBadge = `<span class="badge badge-green">${steps}</span>`;
+
+    const tr = document.createElement("tr");
+    tr.className = "new-row";
+    tr.innerHTML = `<td>${time}</td><td>${voltBadge}</td><td>${stepBadge}</td>`;
+    logBody.prepend(tr);
+    while (logBody.children.length > 10) logBody.removeChild(logBody.lastChild);
+  }
+
+  // ── Fetch ─────────────────────────────────────────
+  async function fetchData() {
+    try {
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error("Bad response");
+      const data = await res.json();
+      updateDashboard(data);
+    } catch (err) {
+      setStatus(false);
+      console.error("Fetch error:", err);
+    }
+  }
+
+  setInterval(fetchData, 1000);
+  fetchData();
+</script>
+</body>
+</html>
