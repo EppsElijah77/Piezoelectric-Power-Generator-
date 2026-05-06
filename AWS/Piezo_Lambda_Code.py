@@ -41,7 +41,7 @@ def lambda_handler(event, context):
         },
         "body": json.dumps({
             "steps":      int(payload.get("steps", 0)),
-            "voltage_mv": round(float(payload.get("voltage", 0)) * 1000, 1),
+            "voltage_mv": round(float(payload.get("voltage", 0)), 1),
             "timestamp":  item.get("timestamp", "")
         }, cls=DecimalEncoder)
     }
