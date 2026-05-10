@@ -14,7 +14,7 @@ TX_UUID     = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"  # ESP32 notifies on this
 # ─────────────────────────────────────────────
 # AWS IoT CONFIG
 # ─────────────────────────────────────────────
-HOST      = "a3lz5fjtuoifub-ats.iot.us-east-2.amazonaws.com"
+HOST      = "ABC123Placeholder.iot.us-east-2.amazonaws.com"
 CERT_PATH = "cert/"
 CLIENT_ID = "Pi_400_BLE_Bridge"
 TOPIC     = "ESP32/FootStep"          
